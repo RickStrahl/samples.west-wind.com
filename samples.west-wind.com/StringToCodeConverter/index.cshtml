@@ -1,0 +1,195 @@
+﻿@using System
+@using System.Text
+@using Newtonsoft.Json
+@using Westwind.Utilities
+
+@functions {
+    private string ToStringCode(string code)
+    {
+        code = code.Replace("\\",@"\\");
+        code = code.Replace("\"", "\\\"");
+        code = code.Replace("\r", "\\r");
+        code = code.Replace("\t", "\\t");
+
+        // *** Turn a new line into newline expansion plus a line break in the code
+        code = code.Replace("\n", "\\n" + "\" +" + "\r\n" + "\"");
+
+        return "\"" + code.TrimEnd('+') + "\"";
+    }
+
+    private string ToVerbatimString(string code)
+    {
+        return "@\"" + code.Replace("\"", "\"\"") + "\"";
+    }
+    string ToJsonStringArray(string code)
+    {
+        var lines = StringUtils.GetLines(code);
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.AppendLine("[");
+        for (var index = 0; index < lines.Length; index++)
+        {
+            var line = lines[index];
+            sb.AppendLine("  " + JsonConvert.SerializeObject(line) + (index < lines.Length - 1 ? "," : null));
+        }
+        sb.AppendLine("]");
+
+        return sb.ToString();
+    }
+}
+
+
+@{
+    string formattedString = string.Empty;
+    string code = "";
+    string type = "JsonStringArray";
+
+    //Response.Headers.Add("X-XSS-Protection", "0");
+
+    if (Request.HttpMethod.Equals("POST", StringComparison.OrdinalIgnoreCase))
+    {
+        code = Request.Unvalidated.Form["code"];
+        type = Request.Form["type"];
+
+
+        if (type == "VerbatimString")
+        {
+            formattedString = ToVerbatimString(code);
+        }
+        else if (type == "StringCode")
+        {
+            formattedString = ToStringCode(code);
+        }
+        else
+        {
+            formattedString = ToJsonStringArray(code);
+        }
+    }
+
+
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>String To Code Converter</title>
+    <link href="https://unpkg.com/bootstrap@4.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css">
+    <style>
+        body, html {
+            font-size: 17px;
+        }
+        body {
+            margin: 10px 40px;
+        }
+        .formatted {
+            font-weight: bold;
+            background: #eee;            
+            padding: 15px;
+            border-radius: 4px;
+            font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
+        }
+        .indent {
+            margin: 5% 2%;
+        }
+        @@media(max-width: 600px) 
+        {
+            body, html {
+                font-size: 15px !important;
+            }
+            body {
+                margin: 10px 10px !important;                
+            }
+        }
+    </style>
+</head>
+<body >
+    <h1>
+        String To Code Converter
+    </h1>
+    <hr />
+
+<p>
+    This converter converts a block of text into several code formats.                 
+</p>
+
+<ul>
+    <li><b>JSON String Array</b> - An array of JSON formatted strings <small>(useful for VS Code Templates/Snippets)</small></li>
+    <li><b>C# Verbatim String</b> - C# @@ formatted string (escaped quotes)</li>
+    <li><b>String as Code</b> - Quoted strings for each line added together</li>
+</ul>
+
+
+<form action="" method="post">
+    <textarea type="text" id="code" name="code"
+              class="formatted"
+              placeholder="Enter text to turn into code"
+              style="background: #fbfbfb; width: 100%; height: 500px; margin: 10px 0;">@code</textarea>
+
+    <div>
+        <button type="submit" class="btn btn-lg btn-primary"><i class="fas fa-random"></i> Convert to Code</button>
+        <select id="type" name="type" class="form-control float-right"
+                onchange="document.forms[0].submit()"
+                style="display: inline; width: 185px;">
+            <option value="JsonStringArray" @(type == "JsonStringArray" ? "selected" : null)>JSON String Array</option>
+            <option value="VerbatimString" @(type == "VerbatimString" ? "selected" : null)>Verbatim String</option>
+            <option value="StringCode" @(type == "StringCode" ? "selected" : null)>String as Code</option>
+        </select>
+    </div>
+</form><form action="" method="post">
+    <textarea type="text" id="code" name="code"
+              class="formatted"
+              placeholder="Enter text to turn into code"
+              style="background: #fbfbfb; width: 100%; height: 500px; margin: 10px 0;">@code</textarea>
+
+    <div>
+        <button type="submit" class="btn btn-lg btn-primary"><i class="fas fa-random"></i> Convert to Code</button>
+        <select id="type" name="type" class="form-control float-right"
+                onchange="document.forms[0].submit()"
+                style="display: inline; width: 185px;">
+            <option value="JsonStringArray" @(type == "JsonStringArray" ? "selected" : null)>JSON String Array</option>
+            <option value="VerbatimString" @(type == "VerbatimString" ? "selected" : null)>Verbatim String</option>
+            <option value="StringCode" @(type == "StringCode" ? "selected" : null)>String as Code</option>
+        </select>
+    </div>
+</form>
+
+    @if(!string.IsNullOrEmpty(formattedString))
+    {
+
+        <div class="float-right" style="position: absolute; right: 10px; margin: 22px 50px 0 0">
+            
+        </div>
+        
+        <div class="indent" style="position: relative">
+            <a href="javascript:copyToClip()" class="btn btn-info float-right" style="position: absolute; right: 0"><i class="far fa-clipboard" style="color: black"></i> Copy to clipboard</a>
+            <pre id="FormattedCode" class="formatted">@formattedString</pre>
+        </div>
+        
+
+    }
+
+    <hr />
+    <div style="font-size: 0.8em;">
+        <a href="https://west-wind.com"><img class="float-right" src="https://webconnection.west-wind.com/images/wwtoolbarlogo.png" /></a>
+        &copy; <a href="https://weblog.west-wind.com">Rick Strahl</a>, <a href="https://west-wind.com">West Wind Technologies</a>
+    </div>
+    <script>
+        function copyToClip() {
+            /* Get the text field */
+            var copyText = document.getElementById("FormattedCode");
+            var text = copyText.innerText;
+
+            var el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+
+            document.execCommand('copy');
+            document.body.removeChild(el);
+        }
+    </script>
+</body>
+</html>
+
+
