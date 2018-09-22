@@ -45,7 +45,7 @@
     string code = "";
     string type = "JsonStringArray";
 
-    //Response.Headers.Add("X-XSS-Protection", "0");
+    Response.Headers.Add("X-XSS-Protection", "0");
 
     if (Request.HttpMethod.Equals("POST", StringComparison.OrdinalIgnoreCase))
     {
