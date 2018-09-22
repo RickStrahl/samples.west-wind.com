@@ -136,22 +136,6 @@
             <option value="StringCode" @(type == "StringCode" ? "selected" : null)>String as Code</option>
         </select>
     </div>
-</form><form action="" method="post">
-    <textarea type="text" id="code" name="code"
-              class="formatted"
-              placeholder="Enter text to turn into code"
-              style="background: #fbfbfb; width: 100%; height: 500px; margin: 10px 0;">@code</textarea>
-
-    <div>
-        <button type="submit" class="btn btn-lg btn-primary"><i class="fas fa-random"></i> Convert to Code</button>
-        <select id="type" name="type" class="form-control float-right"
-                onchange="document.forms[0].submit()"
-                style="display: inline; width: 185px;">
-            <option value="JsonStringArray" @(type == "JsonStringArray" ? "selected" : null)>JSON String Array</option>
-            <option value="VerbatimString" @(type == "VerbatimString" ? "selected" : null)>Verbatim String</option>
-            <option value="StringCode" @(type == "StringCode" ? "selected" : null)>String as Code</option>
-        </select>
-    </div>
 </form>
 
     @if(!string.IsNullOrEmpty(formattedString))
