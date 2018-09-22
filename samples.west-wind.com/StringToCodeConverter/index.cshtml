@@ -4,6 +4,12 @@
 @using Westwind.Utilities
 
 @functions {
+
+    string formattedString = string.Empty;
+    string codeBlock = "";
+    string type = "JsonStringArray";
+    private bool unixStyleReturns = false;
+
     private string ToStringCode(string code)
     {
         code = code.Replace("\\",@"\\");
@@ -14,12 +20,18 @@
         // *** Turn a new line into newline expansion plus a line break in the code
         code = code.Replace("\n", "\\n" + "\" +" + "\r\n" + "\"");
 
-        return "\"" + code.TrimEnd('+') + "\"";
+        code = "\"" + code.TrimEnd('+') + "\"";
+        if (unixStyleReturns)
+            return code.Replace("\\r\\n", "\\n").Replace("\r\n", "\n");
+        return code;
     }
 
     private string ToVerbatimString(string code)
     {
-        return "@\"" + code.Replace("\"", "\"\"") + "\"";
+        string verbatim = "@\"" + code.Replace("\"", "\"\"") + "\"";
+        if (unixStyleReturns)
+            return verbatim.Replace("\r\n", "\n");
+        return verbatim;
     }
     string ToJsonStringArray(string code)
     {
@@ -35,35 +47,38 @@
         }
         sb.AppendLine("]");
 
+        if (unixStyleReturns)
+            return sb.ToString().Replace("\r\n","\n");
         return sb.ToString();
     }
 }
 
 
 @{
-    string formattedString = string.Empty;
-    string code = "";
-    string type = "JsonStringArray";
 
     Response.Headers.Add("X-XSS-Protection", "0");
 
     if (Request.HttpMethod.Equals("POST", StringComparison.OrdinalIgnoreCase))
     {
-        code = Request.Unvalidated.Form["code"];
+        this.codeBlock = Request.Unvalidated.Form["code"];
         type = Request.Form["type"];
-
+        string t = Request.Form["returnMode"];
+        if (!string.IsNullOrEmpty(t))
+        {
+            unixStyleReturns = true;
+        }
 
         if (type == "VerbatimString")
         {
-            formattedString = ToVerbatimString(code);
+            formattedString = ToVerbatimString(codeBlock);
         }
         else if (type == "StringCode")
         {
-            formattedString = ToStringCode(code);
+            formattedString = ToStringCode(codeBlock);
         }
         else
         {
-            formattedString = ToJsonStringArray(code);
+            formattedString = ToJsonStringArray(codeBlock);
         }
     }
 
@@ -124,17 +139,25 @@
     <textarea type="text" id="code" name="code"
               class="formatted"
               placeholder="Enter text to turn into code"
-              style="background: #fbfbfb; width: 100%; height: 500px; margin: 10px 0;">@code</textarea>
+              style="background: #fbfbfb; width: 100%; height: 500px; margin: 10px 0;">@codeBlock</textarea>
 
     <div>
         <button type="submit" class="btn btn-lg btn-primary"><i class="fas fa-random"></i> Convert to Code</button>
-        <select id="type" name="type" class="form-control float-right"
-                onchange="document.forms[0].submit()"
-                style="display: inline; width: 185px;">
-            <option value="JsonStringArray" @(type == "JsonStringArray" ? "selected" : null)>JSON String Array</option>
-            <option value="VerbatimString" @(type == "VerbatimString" ? "selected" : null)>Verbatim String</option>
-            <option value="StringCode" @(type == "StringCode" ? "selected" : null)>String as Code</option>
-        </select>
+        <div class="float-right">
+            <label style="padding-right: 10px;">
+                <input type="checkbox" class="checkbox" name="returnMode" 
+                       onchange="document.forms[0].submit()"
+                       @(unixStyleReturns ? "checked" : string.Empty) style="display: inline" />
+                Unix Style Returns
+            </label>
+            <select id="type" name="type" class="form-control "
+                    onchange="document.forms[0].submit()"
+                    style="display: inline; width: 185px;">
+                <option value="JsonStringArray" @(type == "JsonStringArray" ? "selected" : null)>JSON String Array</option>
+                <option value="VerbatimString" @(type == "VerbatimString" ? "selected" : null)>Verbatim String</option>
+                <option value="StringCode" @(type == "StringCode" ? "selected" : null)>String as Code</option>
+            </select>
+        </div>
     </div>
 </form>
 
