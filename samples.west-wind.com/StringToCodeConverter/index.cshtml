@@ -8,7 +8,7 @@
     string formattedString = string.Empty;
     string codeBlock = "";
     string type = "JsonStringArray";
-    private bool unixStyleReturns = false;
+    bool unixStyleReturns = false;
 
     private string ToStringCode(string code)
     {
@@ -29,6 +29,7 @@
     private string ToVerbatimString(string code)
     {
         string verbatim = "@\"" + code.Replace("\"", "\"\"") + "\"";
+        verbatim = verbatim.Replace("{","{{").Replace("}","}}");
         if (unixStyleReturns)
             return verbatim.Replace("\r\n", "\n");
         return verbatim;
