@@ -1,6 +1,5 @@
 ﻿@using System
 @using System.Text
-@using System.Xml
 @using Newtonsoft.Json
 @using Westwind.Utilities
 
@@ -30,7 +29,7 @@
     private string ToVerbatimString(string code)
     {
         string verbatim = "@\"" + code.Replace("\"", "\"\"") + "\"";
-
+        
         if (unixStyleReturns)
             return verbatim.Replace("\r\n", "\n");
         return verbatim;
@@ -52,33 +51,6 @@
         if (unixStyleReturns)
             return sb.ToString().Replace("\r\n","\n");
         return sb.ToString();
-    }
-
-    string FromXmlEncodedString(string code)
-    {
-        var _xmlDoc = new XmlDocument();
-        var el = _xmlDoc.CreateElement("t");
-        el.InnerXml = code;
-        return el.InnerText;
-    }
-
-
-    string ToXmlEncodedString(string code)
-    {
-        var _xmlDoc = new XmlDocument();
-        var el = _xmlDoc.CreateElement("t");
-        el.InnerText = code;
-        return el.InnerXml;
-    }
-
-    string ToJsonEncodedString(string code)
-    {
-        return JsonConvert.SerializeObject(code);
-    }
-
-    string FromJsonEncodedString(string code)
-    {
-        return JsonConvert.DeserializeObject(code) as string;
     }
 }
 
@@ -105,27 +77,13 @@
         {
             formattedString = ToStringCode(codeBlock);
         }
-        else if (type == "JsonArray")
+        else
         {
             formattedString = ToJsonStringArray(codeBlock);
         }
-        else if (type == "ToXmlEncodedString")
-        {
-            formattedString = ToXmlEncodedString(codeBlock);
-        }
-        else if (type == "FromXmlEncodedString")
-        {
-            formattedString = FromXmlEncodedString(codeBlock);
-        }
-        else if (type == "ToJsonEncodedString")
-        {
-            formattedString = ToJsonEncodedString(codeBlock);
-        }
-        else if (type == "FromJsonEncodedString")
-        {
-            formattedString = FromJsonEncodedString(codeBlock);
-        }
     }
+
+
 }
 <!DOCTYPE html>
 <html>
@@ -199,10 +157,6 @@
                 <option value="JsonStringArray" @(type == "JsonStringArray" ? "selected" : null)>JSON String Array</option>
                 <option value="VerbatimString" @(type == "VerbatimString" ? "selected" : null)>Verbatim String</option>
                 <option value="StringCode" @(type == "StringCode" ? "selected" : null)>String as Code</option>
-                <option value="ToJsonEncodedString" @(type == "ToJsonEncodedString" ? "selected" : null)>To JSON Encoded String</option>
-                <option value="FromJsonEncodedString" @(type == "FromJsonEncodedString" ? "selected" : null)>From JSON Encoded String</option>
-                <option value="ToXmlEncodedString" @(type == "ToXmlEncodedString" ? "selected" : null)>To XML Encoded String</option>
-                <option value="FromXmlEncodedString" @(type == "FromXmlEncodedString" ? "selected" : null)>From XML Encoded String</option>
             </select>
         </div>
     </div>
